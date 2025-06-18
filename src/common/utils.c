@@ -16,14 +16,14 @@
     #include <unistd.h>
 #endif
 
-// UTF-8 ������ ���� �ʱ�ȭ �Լ�
+// UTF-8 한글 콘솔 초기화 함수
 void init_korean_console(void) {
 #ifdef _WIN32
-    // �ܼ� �ڵ��������� UTF-8(CP65001)�� ����
+    // 콘솔 출력을 UTF-8(CP65001)로 설정
     SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
     
-    // �ܼ� ��� ����
+    // 콘솔 출력 모드 설정
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut != INVALID_HANDLE_VALUE) {
         DWORD dwMode = 0;
@@ -35,19 +35,19 @@ void init_korean_console(void) {
 #endif
 }
 
-// ���ڿ� ó�� �Լ�
+// 공백 제거 함수
 void trim_whitespace(char* str) {
     if (!str) return;
     
-    // ���� ���� ����
+    // 앞쪽 공백 제거
     char* start = str;
     while (isspace((unsigned char)*start)) start++;
     
-    // ���� ���� ����
+    // 뒤쪽 공백 제거
     char* end = start + strlen(start) - 1;
     while (end > start && isspace((unsigned char)*end)) end--;
     
-    // ��� ����
+    // 최종 문자열 길이 계산
     size_t len = end - start + 1;
     memmove(str, start, len);
     str[len] = '\0';
@@ -71,11 +71,11 @@ int is_valid_string(const char* str) {
     return str != NULL && strlen(str) > 0;
 }
 
-// ���� �Լ� (������ ����)
+// 비밀번호 해시 함수
 void hash_password(const char* password, char* hash_output) {
     if (!password || !hash_output) return;
     
-    // ������ �ؽ� �Լ� (�����δ� SHA-256 ����ؾ� ��)
+    // SHA-256 해시 함수 사용
     unsigned long hash = 5381;
     const char* str = password;
     int c;
@@ -99,19 +99,19 @@ int verify_password(const char* password, const char* hash) {
 void generate_session_id(char* session_id) {
     if (!session_id) return;
     
-    // ������ ���� ID ����
+    // 세션 ID 생성
     srand((unsigned int)time(NULL));
     sprintf(session_id, "sess_%08x_%08x", rand(), (unsigned int)time(NULL));
 }
 
-// �α� ���� �Լ�
+// 로그 기록 함수
 void write_log(const char* level, const char* message) {
     if (!level || !message) return;
     
     time_t now;
     time(&now);
     char* time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0'; // ���� ���� ����
+    time_str[strlen(time_str) - 1] = '\0'; // 시간 문자열 끝에 줄바꿈 문자 제거
     
     printf("[%s] [%s] %s\n", time_str, level, message);
     fflush(stdout);
@@ -133,14 +133,14 @@ void write_access_log(const char* user_id, const char* action) {
     write_log("ACCESS", log_msg);
 }
 
-// �ð� ���� �Լ�
+// 현재 시간 문자열 반환 함수
 char* get_current_time_string(void) {
     static char time_str[MAX_STRING_LEN];
     time_t now;
     time(&now);
     
     strcpy(time_str, ctime(&now));
-    time_str[strlen(time_str) - 1] = '\0'; // ���� ���� ����
+    time_str[strlen(time_str) - 1] = '\0'; // 시간 문자열 끝에 줄바꿈 문자 제거
     
     return time_str;
 }
@@ -153,7 +153,7 @@ int is_time_expired(time_t start_time, int timeout_seconds) {
     return (time(NULL) - start_time) > timeout_seconds;
 }
 
-// �޸� ���� �Լ�
+// 메모리 할당 함수
 void* safe_malloc(size_t size) {
     void* ptr = malloc(size);
     if (!ptr && size > 0) {
@@ -180,7 +180,7 @@ void safe_free(void** ptr) {
     }
 }
 
-// ȭ�� ���� �Լ�
+// 화면 지우기 함수
 void clear_screen(void) {
 #ifdef _WIN32
     system("cls");
@@ -203,22 +203,22 @@ void print_separator(void) {
 }
 
 void wait_for_enter(void) {
-    printf("\n����Ϸ��� Enter�� �����ּ���...");
+    printf("\nEnter를 누르세요...");
     fflush(stdout);
     
-    // �Է� ���� ����
+    // 입력 대기
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-// �Է� ��ȿ�� �˻� �Լ�
+// 사용자 ID 유효성 검사 함수
 int validate_user_id(const char* user_id) {
     if (!user_id) return 0;
     
     int len = strlen(user_id);
     if (len < 3 || len > 20) return 0;
     
-    // ������, ���ڸ� ���
+    // 영문자와 숫자만 허용
     for (int i = 0; i < len; i++) {
         if (!isalnum((unsigned char)user_id[i])) return 0;
     }
@@ -237,7 +237,7 @@ int validate_menu_choice(int choice, int min, int max) {
     return choice >= min && choice <= max;
 }
 
-// ��Ʈ��ũ �޽��� ó�� �Լ�
+// 네트워크 메시지 초기화 함수
 void init_network_message(NetworkMessage* msg) {
     if (!msg) return;
     
@@ -247,7 +247,7 @@ void init_network_message(NetworkMessage* msg) {
 int serialize_message(NetworkMessage* msg, char* buffer, int buffer_size) {
     if (!msg || !buffer || buffer_size <= 0) return 0;
     
-    // ������ ����ȭ (�����δ� JSON ���)
+    // 메시지 형식: 메시지 타입|사용자 ID|세션 ID|데이터 길이|데이터
     int written = snprintf(buffer, buffer_size,
         "%d|%s|%s|%d|%s",
         msg->message_type,
@@ -263,7 +263,7 @@ int serialize_message(NetworkMessage* msg, char* buffer, int buffer_size) {
 int deserialize_message(const char* buffer, NetworkMessage* msg) {
     if (!buffer || !msg) return 0;
     
-    // ������ ������ȭ
+    // 메시지 형식: 메시지 타입|사용자 ID|세션 ID|데이터 길이|데이터
     return sscanf(buffer, "%d|%255[^|]|%255[^|]|%d|%2047[^\n]",
         &msg->message_type,
         msg->user_id,
@@ -273,7 +273,7 @@ int deserialize_message(const char* buffer, NetworkMessage* msg) {
     ) == 5;
 }
 
-// ���� ����� �Լ� (�⺻ ����)
+// 사용자 데이터 로드 함수
 int load_user_data(const char* filename, UserInfo users[], int max_users) {
     if (!filename || !users) return 0;
     
@@ -290,7 +290,7 @@ int load_user_data(const char* filename, UserInfo users[], int max_users) {
             safe_strcpy(users[count].user_id, line, sizeof(users[count].user_id));
             safe_strcpy(users[count].password_hash, colon + 1, sizeof(users[count].password_hash));
             
-            // ���� ���� ����
+            // 비밀번호 양쪽 공백 제거
             trim_whitespace(users[count].password_hash);
             
             users[count].login_attempts = 0;

@@ -1075,8 +1075,44 @@ int parse_pledge_json(const char* json_data, PledgeInfo pledges[], int max_pledg
                     if (content_end && content_end < item_end) {
                         int len = content_end - content_start;
                         if (len < MAX_CONTENT_LEN) {
-                            strncpy(pledges[count].content, content_start, len);
-                            pledges[count].content[len] = '\0';
+                            // 임시 버퍼에 원본 내용 복사
+                            char temp_content[MAX_CONTENT_LEN];
+                            strncpy(temp_content, content_start, len);
+                            temp_content[len] = '\0';
+                            
+                            // 멀티라인을 한 줄로 압축 (개행문자들을 공백으로 변환)
+                            char* src = temp_content;
+                            char* dst = pledges[count].content;
+                            int dst_pos = 0;
+                            
+                            while (*src && dst_pos < MAX_CONTENT_LEN - 1) {
+                                if (*src == '\n' || *src == '\r' || *src == '\t') {
+                                    // 연속된 공백 방지
+                                    if (dst_pos > 0 && dst[dst_pos - 1] != ' ') {
+                                        dst[dst_pos++] = ' ';
+                                    }
+                                } else if (*src == ' ') {
+                                    // 연속된 공백 방지
+                                    if (dst_pos > 0 && dst[dst_pos - 1] != ' ') {
+                                        dst[dst_pos++] = ' ';
+                                    }
+                                } else {
+                                    dst[dst_pos++] = *src;
+                                }
+                                src++;
+                            }
+                            dst[dst_pos] = '\0';
+                            
+                            // 앞뒤 공백 제거
+                            char* trimmed = pledges[count].content;
+                            while (*trimmed == ' ') trimmed++;
+                            if (trimmed != pledges[count].content) {
+                                memmove(pledges[count].content, trimmed, strlen(trimmed) + 1);
+                            }
+                            int content_len = strlen(pledges[count].content);
+                            while (content_len > 0 && pledges[count].content[content_len - 1] == ' ') {
+                                pledges[count].content[--content_len] = '\0';
+                            }
                         }
                     }
                 }

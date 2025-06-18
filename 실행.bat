@@ -61,7 +61,17 @@ echo.
 echo 🚀 서버를 백그라운드에서 시작...
 make all >nul 2>&1
 start /min "선거 공약 서버" .\build\server.exe
-timeout /t 2 >nul
+
+echo 서버 시작을 확인하는 중...
+:wait_server
+timeout /t 1 >nul
+netstat -an | findstr ":8080" | findstr "LISTENING" >nul
+if %errorlevel% neq 0 (
+    echo 서버 시작 대기중...
+    goto wait_server
+)
+echo ✅ 서버가 준비되었습니다!
+
 echo 🚀 클라이언트 시작...
 .\build\client.exe
 goto end

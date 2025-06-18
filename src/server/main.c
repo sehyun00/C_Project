@@ -36,20 +36,10 @@ void signal_handler(int signal) {
 
 // 서버 초기화
 int init_server(void) {
-    printf("DEBUG: init_server 시작\n");
-    fflush(stdout);
-    
     write_log("INFO", "Initializing server...");
     
-    printf("DEBUG: write_log 완료\n");
-    fflush(stdout);
-    
     // 데이터 구조체 초기화
-    printf("DEBUG: memset 시작\n");
-    fflush(stdout);
     memset(&g_server_data, 0, sizeof(ServerData));
-    printf("DEBUG: memset 완료\n");
-    fflush(stdout);
     
     // 뮤텍스 초기화
 #ifdef _WIN32
@@ -1688,10 +1678,6 @@ int load_pledges_from_file(PledgeInfo pledges[], int max_count) {
         }
         
         if (token_count < 8) {
-            if (count <= 5) {  // 처음 5개만 로그 출력
-                printf("DEBUG: 라인 %d 건너뛰기 (토큰 개수 부족: %d개): %.50s...\n", 
-                       line_num, token_count, line);
-            }
             continue;
         }
         
@@ -1716,10 +1702,6 @@ int load_pledges_from_file(PledgeInfo pledges[], int max_count) {
         pledges[count].created_time = (time_t)atoll(tokens[7]);
         
         count++;
-        if (count <= 5) {  // 처음 5개만 로그 출력
-            printf("DEBUG: 공약 %d개째 로드: ID=%s, 제목=%.30s...\n", 
-                   count, pledges[count-1].pledge_id, pledges[count-1].title);
-        }
     }
     
     fclose(file);
@@ -2145,7 +2127,6 @@ void update_pledge_statistics(const char* pledge_id) {
 #endif
     
     write_log("INFO", "공약 통계 업데이트 완료");
-    printf("📊 공약 %s 통계 업데이트: 👍 %d, 👎 %d\n", pledge_id, like_count, dislike_count);
 }
 
 // 공약 통계 요청 처리
@@ -2239,6 +2220,22 @@ int load_evaluations_from_file(void) {
     
     fclose(file);
     printf("📊 평가 데이터 %d개를 파일에서 로드했습니다.\n", g_server_data.evaluation_count);
+    
+    // 로드된 평가 데이터를 기반으로 모든 공약의 통계 업데이트
+    printf("🔄 공약 통계 업데이트 중...\n");
+    for (int i = 0; i < g_server_data.pledge_count; i++) {
+        update_pledge_statistics(g_server_data.pledges[i].pledge_id);
+    }
+    printf("✅ 공약 통계 업데이트 완료!\n");
+    
+    // 업데이트된 통계를 파일에 저장
+    printf("💾 업데이트된 공약 통계를 파일에 저장 중...\n");
+    if (save_pledges_to_file(g_server_data.pledges, g_server_data.pledge_count)) {
+        printf("✅ 공약 통계 파일 저장 완료!\n");
+    } else {
+        printf("❌ 공약 통계 파일 저장 실패!\n");
+    }
+    
     return g_server_data.evaluation_count;
 }
 
